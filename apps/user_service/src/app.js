@@ -3,10 +3,9 @@ require("dotenv").config();
 const bodyParser = require("body-parser");
 const db = require("./mysql/mysql_connection.js");
 const app = express();
-const port = 5000;
+const port = process.env.APP_PORT || 5000;
 const User = require("./user.js").User;
 const log = require("./logger.js");
-
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -25,6 +24,12 @@ const logger = (req, res, next) => {
   log.info(`Message received from ip: ${req.ip} `);
   next();
 };
+
+// Health Check endpoint
+app.get("/user/health-check", logger, (req, res, next) => {
+  log.info(`Incoming request for heath check, responding`);
+  res.status(200).json({ message: "I am alive" });
+});
 
 // Return all users
 app.get("/user", logger, (req, res, next) => {
@@ -135,6 +140,24 @@ app.delete("/user/:id", logger, (req, res, next) => {
   }
 });
 
+// Invalid health check URL
+app.get("/user/health-check*", (req, res) => {
+  log.error(`Invalid request: ${req.url}`);
+  res.status(404).json({ error: 404, description: "Invalid URL" });
+});
+
+// Invalid user URL
+app.get("/user/*", (req, res) => {
+  log.warn(`Invalid get request: ${req.url}`);
+  res.status(404).json({ error: 404, description: "ID not found" });
+});
+
+// Invalid URL
+app.get("*", (req, res) => {
+  log.error(`Invalid request: ${req.url}`);
+  res.status(404).json({ error: 404, description: "Invalid URL" });
+});
+
 // Invalid user POST request
 app.post("/user", (req, res) => {
   log.error(`Bad request body: ${JSON.stringify(req.body)}`);
@@ -169,18 +192,6 @@ app.delete("/user/*", (req, res) => {
 app.delete("*", (req, res) => {
   log.error(`Invalid delete request: ${req.url}`);
   res.status(400).json({ error: 400, description: `Can not delete: ${req.url}` });
-});
-
-// Invalid user URL
-app.get("/user/*", (req, res) => {
-  log.warn(`Invalid get request: ${req.url}`);
-  res.status(404).json({ error: 404, description: "ID not found" });
-});
-
-// Invalid URL
-app.get("*", (req, res) => {
-  log.error(`Invalid request: ${req.url}`);
-  res.status(404).json({ error: 404, description: "Invalid URL" });
 });
 
 app.listen(port, (error) => {
