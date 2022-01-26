@@ -8,7 +8,7 @@ Will store and manage 'users'
 * Read users
 * Delete users
 * Logging
+* Use a DB instead of Array
 
 #### Missing tasks:
 * Tests
-* Use a DB instead of Array

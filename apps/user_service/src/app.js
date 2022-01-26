@@ -1,10 +1,12 @@
 const express = require("express");
+require("dotenv").config();
 const bodyParser = require("body-parser");
+const db = require("./mysql/mysql_connection.js");
 const app = express();
 const port = 5000;
 const User = require("./user.js").User;
-const log = require('./logger.js');
-require("dotenv").config();
+const log = require("./logger.js");
+
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -27,38 +29,57 @@ const logger = (req, res, next) => {
 // Return all users
 app.get("/user", logger, (req, res, next) => {
   log.info("Incoming request for all users");
-  const userJson = {};
-  Object.assign(userJson, userList);
-  log.info("Responded with a list of all users");
-  res.status(200).json(userJson);
+  db.connection.query(`SELECT * FROM user`, (error, result) => {
+    if (error) {
+      log.error(`Failed to get users.\n${error}`);
+      return next();
+    }
+    log.info(`Responded with a list of all users: ${JSON.stringify({ users: result })}`);
+    res.status(200).json({ users: result });
+  });
 });
 
 // Return a user
 app.get("/user/:id", logger, (req, res, next) => {
   const id = parseInt(req.params.id);
-  const totalUsers = userList.length;
-  if (id < totalUsers) {
-    log.info(`Responded with user named: ${userList[id].first_name}`);
-    res.status(200).json({ user: userList[id] });
+  if (Number.isInteger(id)) {
+    db.connection.query(`SELECT * FROM user WHERE id=?`, [id], (error, result) => {
+      if (error) {
+        log.error(`Failed to get user of id ${id}.\n${error}`);
+        next();
+      }
+      if (result[0] !== undefined) {
+        log.info(`Responded with user: ${JSON.stringify(result[0])}`);
+        res.status(200).json(result[0]);
+      } else {
+        next();
+      }
+    });
   } else {
-    next(); // Returns 404
+    next();
   }
 });
 
 // Create a user
 app.post("/user", logger, (req, res, next) => {
   log.info("Incoming request to create a new user");
-  const newUser = new User(
-    req.body.first_name,
-    req.body.last_name,
-    req.body.age
-  );
+  const newUser = new User(req.body.first_name, req.body.last_name, req.body.age);
   if (newUser.first_name && newUser.last_name && newUser.age) {
-    userList.push(newUser);
-    log.info(`New user created: ${JSON.stringify(newUser)}`);
-    res.status(201).json({ description: "User added", new_user: newUser });
+    db.connection.query(
+      `INSERT INTO user VALUES(default, ?, ?, ?);`,
+      [newUser.first_name, newUser.last_name, newUser.age],
+      (error, result) => {
+        if (error) {
+          log.error(`Failed to create user: ${JSON.stringify(newUser)}.\n${error}`);
+          throw error;
+        }
+        log.info(`New user created: ${JSON.stringify(newUser)}`);
+        log.info(`Affected rows: ${result.affectedRows}`);
+        return res.status(201).json({ description: "User added", new_user: newUser });
+      }
+    );
   } else {
-    next();
+    return next();
   }
 });
 
@@ -66,20 +87,28 @@ app.post("/user", logger, (req, res, next) => {
 app.patch("/user/:id", logger, (req, res, next) => {
   log.info(`Update request received for id: ${req.params.id}`);
   const id = parseInt(req.params.id);
-  const totalUsers = userList.length;
-  if (id < totalUsers) {
-    const newUser = new User(
-      req.body.first_name,
-      req.body.last_name,
-      req.body.age
+  const newUser = new User(req.body.first_name, req.body.last_name, req.body.age);
+  if (newUser.first_name && newUser.last_name && newUser.age && Number.isInteger(id)) {
+    db.connection.query(
+      `UPDATE user SET first_name=?, last_name=?, age=? where id=?;`,
+      [newUser.first_name, newUser.last_name, newUser.age, id],
+      (error, result) => {
+        if (error) {
+          log.error(`Failed to update user: ${JSON.stringify(newUser)}.\n${error}`);
+          return next();
+        }
+        if (result.affectedRows > 0) {
+          log.info(`Updated user with id: ${req.params.id} to: ${JSON.stringify(newUser)}`);
+          log.info(`Affected rows: ${result.affectedRows}`);
+          return res.status(200).json({ description: "User updated", new_user: newUser });
+        } else {
+          return next();
+        }
+      }
     );
-    if (newUser.first_name && newUser.last_name && newUser.age) {
-      log.info(`Updated user with id: ${req.params.id} to: ${JSON.stringify(newUser)}`);
-      userList[id] = newUser;
-      res.status(200).json({ description: "User updated", new_user: newUser });
-    }
   } else {
-    next();
+    log.error(`Bad request to update id: '${req.params.id}' body: ${JSON.stringify(req.body)}`);
+    return res.status(400).json({ error: 400, description: "Bad request" });
   }
 });
 
@@ -87,16 +116,24 @@ app.patch("/user/:id", logger, (req, res, next) => {
 app.delete("/user/:id", logger, (req, res, next) => {
   log.info(`Delete request received for id: ${req.params.id}`);
   const id = parseInt(req.params.id);
-  const totalUsers = userList.length;
-  if (id < totalUsers && userList[id]) {
-    userList.splice(id);
-    log.info(`Successfully deleted user with id: ${id}`);
-    res.status(200).json({ description: "User deleted" });
+  if (Number.isInteger(id)) {
+    db.connection.query(`DELETE FROM user WHERE id=?`, [id], (error, result, fields) => {
+      if (error) {
+        log.error(`Failed to delete user with id: ${id}.\n${error}`);
+        return next();
+      }
+      if (result.affectedRows > 0) {
+        log.info(`Successfully deleted user with id: ${id}`);
+        log.info(`Affected rows: ${result.affectedRows}`);
+        return res.status(200).json({ description: "User deleted" });
+      } else {
+        return next();
+      }
+    });
   } else {
-    next(); // Returns 404
+    return next(); // Returns 404
   }
 });
-
 
 // Invalid user POST request
 app.post("/user", (req, res) => {
@@ -131,14 +168,12 @@ app.delete("/user/*", (req, res) => {
 // Invalid DELETE request
 app.delete("*", (req, res) => {
   log.error(`Invalid delete request: ${req.url}`);
-  res
-    .status(400)
-    .json({ error: 400, description: `Can not delete: ${req.url}` });
+  res.status(400).json({ error: 400, description: `Can not delete: ${req.url}` });
 });
 
 // Invalid user URL
 app.get("/user/*", (req, res) => {
-  log.warn(`Invalid request: ${req.url}`);
+  log.warn(`Invalid get request: ${req.url}`);
   res.status(404).json({ error: 404, description: "ID not found" });
 });
 

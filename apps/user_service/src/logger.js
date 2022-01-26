@@ -19,7 +19,7 @@ function error(text) {
 function formatDateTime() {
   const currentDate = new Date();
   const date = currentDate.toLocaleDateString();
-  const time = new Date().toLocaleTimeString();
+  const time = currentDate.toLocaleTimeString();
   return `[${date}  ${time}]`;
 }
 
