@@ -9,6 +9,8 @@ Will store and manage 'users'
 * Delete users
 * Logging
 * Use a DB instead of Array
+* Dockerization of MySQL with docker-compose
 
 #### Missing tasks:
 * Tests
+* Dockerization of NodeJs with docker-compose

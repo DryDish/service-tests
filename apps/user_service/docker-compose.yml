@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  mysql-db:
+    image: test-mysql-db:0.1
+    build: ./docker/.
+    environment:
+      - MYSQL_USER=$DB_USER
+      - MYSQL_HOST=$DB_HOST
+      - MYSQL_PASSWORD=$DB_PASS
+      - MYSQL_DATABASE=$DB_SCHEMA
+      - MYSQL_ROOT_PASSWORD=$DB_ROOT_PWD
+    network_mode: "host"
