@@ -3,8 +3,8 @@
 ### Tasks
 
 #### Done
-* Node 'user' service to use a real DB
+* Nothing fully done yet
 
 #### Missing
-* Containerized environment
+* NodeJs based user service with a MySQL DB (missing tests)
 * Most things

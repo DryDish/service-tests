@@ -1,6 +1,7 @@
 ### CRUD API for users
-Will store and manage 'users'
+Stores and manages 'users'
 
+To run it simple execute: 'docker-compose up' from the directory: 'user_service'
 
 #### Done tasks:
 * Create users
@@ -10,7 +11,8 @@ Will store and manage 'users'
 * Logging
 * Use a DB instead of Array
 * Dockerization of MySQL with docker-compose
+* Dockerization of NodeJs with docker-compose
 
 #### Missing tasks:
 * Tests
-* Dockerization of NodeJs with docker-compose
+* Tests that leverage Docker

@@ -3,7 +3,9 @@ version: '3'
 services:
   mysql-db:
     image: test-mysql-db:0.1
-    build: ./docker/mysql/.
+    build: 
+      dockerfile: docker/mysql/Dockerfile
+      context: .
     environment:
       - MYSQL_USER=$DB_USER
       - MYSQL_HOST=$DB_HOST
@@ -12,3 +14,19 @@ services:
       - MYSQL_ROOT_PASSWORD=$DB_ROOT_PWD
     ports:
       - 3306:3306
+    
+  user-service:
+    image: test-user-service:0.1
+    build: 
+      dockerfile: docker/node/Dockerfile
+      context: .
+    environment:
+      - APP_PORT=$APP_PORT
+      - DB_USER=$DB_USER
+      - DB_HOST=$DB_HOST
+      - DB_PASS=$DB_PASS
+      - DB_SCHEMA=$DB_SCHEMA
+    ports:
+      - 5000:5000
+    depends_on:
+      - mysql-db
