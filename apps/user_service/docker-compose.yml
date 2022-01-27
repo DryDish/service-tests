@@ -2,6 +2,9 @@ version: '3'
 
 services:
   mysql-db:
+    profiles:
+       - test
+       - run
     image: test-mysql-db:0.1
     build: 
       dockerfile: docker/mysql/Dockerfile
@@ -16,6 +19,9 @@ services:
       - 3306:3306
     
   user-service:
+    profiles:
+      - test
+      - run
     image: test-user-service:0.1
     build: 
       dockerfile: docker/node/Dockerfile
@@ -30,3 +36,25 @@ services:
       - 5000:5000
     depends_on:
       - mysql-db
+
+  service-test:
+    profiles:
+      - test
+    build:       
+      dockerfile: docker/node/Dockerfile.test
+      context: .
+    environment:
+      - APP_PORT=$APP_PORT
+      - DB_USER=$DB_USER
+      - DB_HOST=$DB_HOST
+      - DB_PASS=$DB_PASS
+      - DB_SCHEMA=$DB_SCHEMA
+      - SERVICE_HOST=$SERVICE_HOST
+    ports:
+      - 5001:5001
+    depends_on:
+      - mysql-db
+      - user-service
+
+# To run the tests use:
+# docker-compose --profile test up --build --abort-on-container-exit --exit-code-from service-test    

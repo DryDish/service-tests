@@ -3,10 +3,11 @@ FROM node:current-alpine
 WORKDIR /app
 
 COPY package.json package.json
-RUN npm install --only=prod
+RUN npm install
 
 COPY .env .env 
 COPY src/ src/
+COPY test/ test/
 
 
-CMD ["node", "src/app.js"]
+CMD ["npm", "test"]

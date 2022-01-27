@@ -6,5 +6,5 @@
 * Nothing fully done yet
 
 #### Missing
-* NodeJs based user service with a MySQL DB (missing tests)
+* NodeJs based user service with a MySQL DB (missing edge tests)
 * Most things

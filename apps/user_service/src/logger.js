@@ -62,8 +62,8 @@ const colors = {
   },
 };
 
-module.exports = {
+export {
   warn,
   info,
-  error,
+  error
 };
