@@ -3,9 +3,8 @@
 ### Tasks
 
 #### Done
-* Nothing quite yet
+* Node 'user' service to use a real DB
 
 #### Missing
-* Node 'user' service to use a real DB
 * Containerized environment
 * Most things
