@@ -11,7 +11,7 @@ const connection = createConnection({
 
 
 function createUserTable() {
-  warn("Creating user table!");
+  info("Creating user table!");
   connection.query(
     `CREATE TABLE IF NOT EXISTS user (id INT AUTO_INCREMENT PRIMARY KEY, first_name VARCHAR(50), last_name VARCHAR(50), age INT)`,
     (error, result) => {
@@ -24,14 +24,15 @@ function createUserTable() {
   );
 }
 
-function dropUserTable() {
-  warn("Dropping user table!");
-  connection.query(`DROP TABLE IF EXISTS user`, (error, result) => {
+async function dropUserTable() {
+  info("Dropping user table!");
+  connection.query(`DROP TABLE IF EXISTS user`, async(error, result) => {
     if (error) {
       error("Failed to drop table");
       throw error;
     }
     info(JSON.stringify(result));
+    return result;
   });
 }
 

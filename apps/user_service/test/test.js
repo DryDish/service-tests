@@ -1,6 +1,29 @@
 import fetch from "node-fetch";
 import { User } from "../src/user.js";
-import { createUserTable, dropUserTable } from "../src/mysql/mysql_connection.js";
+import { connection } from "../src/mysql/mysql_connection.js";
+
+beforeAll(() => {
+  connection.query(
+    `CREATE TABLE IF NOT EXISTS user (id INT AUTO_INCREMENT PRIMARY KEY, first_name VARCHAR(50), last_name VARCHAR(50), age INT)`,
+    (error, result) => {
+      if (error) {
+        console.error("Failed to create table");
+        throw error;
+      }
+    }
+  );
+});
+
+afterAll(async () => {
+  connection.query(`DROP TABLE IF EXISTS user`, async(error, result) => {
+    if (error) {
+      console.error("Failed to drop table");
+      throw error;
+    }
+  });
+  connection.end();
+  await new Promise(resolve => setTimeout(() => resolve(), 500)); // avoid jest open handle error
+});
 
 describe("Sample Test", () => {
   it("should test that true === true", () => {
@@ -13,21 +36,19 @@ describe("Sample Test", () => {
 });
 
 describe("Check that the API is alive", () => {
+  
   it("should test that /health-check responds correctly", async () => {
+
     const promise = await fetch(`http://${process.env.SERVICE_HOST}:5000/user/health-check`, { method: "GET" });
     const response = await promise.json();
-
     expect(response.message).toBe("I am alive");
   });
 });
 
 describe("Create, update and delete a user", () => {
-  dropUserTable();
-  createUserTable();
   const testUser = new User("FirstName", "LastName", 21);
 
   it("should test that a user is created correctly", async () => {
-    await new Promise(r => setTimeout(r, 1000));
     const promise = await fetch(`http://${process.env.SERVICE_HOST}:5000/user`, {
       method: "POST",
       body: JSON.stringify(testUser),
@@ -49,7 +70,7 @@ describe("Create, update and delete a user", () => {
     const response = await promise.json();
 
     expect(Array.isArray(response.users)).toBe(true);
-    expect(response.users.length > 0).toBe(true);
+    expect(response.users.length === 1).toBe(true);
 
     // Get the ID of the created testUser
     let responseArray = [];
@@ -78,4 +99,17 @@ describe("Create, update and delete a user", () => {
     expect(response.new_user.last_name).toBe(testUser.last_name);
     expect(response.new_user.age).toBe(testUser.age);
   });
+
+  it("should test that a user is deleted correctly", async () => {
+
+    const promise = await fetch(`http://${process.env.SERVICE_HOST}:5000/user/${id}`, {
+      method: "DELETE",
+      body: JSON.stringify(testUser),
+      headers: {'Content-Type': 'application/json'}
+    });
+    const response = await promise.json();
+    
+    expect(response.description).toBe("User deleted");
+  });
 });
+

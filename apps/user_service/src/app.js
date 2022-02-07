@@ -29,7 +29,7 @@ const logger = (req, res, next) => {
 
 // Health Check endpoint
 app.get("/user/health-check", logger, (req, res, next) => {
-  info(`Incoming request for heath check, responding`);
+  info(`Incoming request for health check, responding`);
   res.status(200).json({ message: "I am alive" });
 });
 
