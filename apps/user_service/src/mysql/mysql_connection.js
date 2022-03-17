@@ -1,6 +1,6 @@
+import 'dotenv/config';
 import { createConnection } from "mysql2";
 import {info, warn, error} from "../logger.js";
-import 'dotenv/config';
 
 const connection = createConnection({
   host: process.env.DB_HOST,

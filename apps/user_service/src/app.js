@@ -1,5 +1,5 @@
-import express from "express";
 import 'dotenv/config';
+import express from "express";
 import pkg from 'body-parser';
 const { urlencoded, json } = pkg;
 import { connection } from "./mysql/mysql_connection.js";
